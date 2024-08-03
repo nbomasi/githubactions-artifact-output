@@ -32,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: boma-artifacts
-          path: boma # Ensure this is the correct path to the build artifacts
+          path: public # Ensure this is the correct path to the build artifacts
 
   deploy:
     needs: build
