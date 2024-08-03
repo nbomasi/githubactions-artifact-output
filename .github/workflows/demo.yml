@@ -39,7 +39,7 @@ jobs:
       - name: Get artifact
         uses: actions/download-artifact@v3
         with:
-          name: boma-files
+          name: boma-artifacts
       - name: List content of working dir
         run: ls
       - name: Deploy
