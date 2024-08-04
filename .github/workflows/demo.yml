@@ -10,7 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm # Path to be cached
+          key: deps-node-modules-${{ hashFiles('**/package-lock.json') }} # Cache key based on package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Lint code
@@ -21,13 +26,23 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    outputs:
+      script-file: ${{ steps.publish.outputs.script-file }} This part make it possible to reference the file
     steps:
       - name: Get code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+      - name: Cache dependencies
+        uses: actions/cache@v4 # This action is needed to avoid repeating steps that takes time, such as installing dependencies
+        with:
+          path: ~/.npm # Path to be cached
+          key: deps-node-modules-${{ hashFiles('**/package-lock.json') }} # Cache key based on package-lock.json. # This part keep track of the exact file if there are no changes it keeps it, but if there are changes, it discards it and updates the new one
       - name: Install dependencies
         run: npm ci
       - name: Build website
         run: npm run build
+      - name: Publish JS filename
+        id: publish # The Identifier of the file
+        run: find dist/assets/*.js -type f -execdir echo '::set-output name=script-file::{}' ';' # Linux command that fetch the file name, and tag it script-file
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -38,11 +53,13 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Get artifact
-        uses: actions/download-artifact@v3
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
           name: boma-artifacts
       - name: List content of working dir
         run: ls
+      - name: output file name
+        run: echo "${{ needs.build.outputs.script-file }}" # calling the file in other jobs
       - name: Deploy
-        run: echo "Deploying..."
+        run: echo "Deploying..." # Replace this with the actual deployment command
